@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sideload-bg: #F4F4F2;
+  --color-sideload-surface: #E8E8E8;
+  --color-sideload-line: #BBBFCA;
+  --color-sideload-primary: #495464;
+  --color-sideload-ink: #222629;
+  --color-sideload-error: #B42318;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-pixel: 'Silkscreen', monospace;
+}
+
+/* Accessibility & interaction affordance base rules */
+a, button, summary, select, label[for], input[type="checkbox"], input[type="radio"] {
+  cursor: pointer;
+}
+
+button:disabled, input:disabled, select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+:focus-visible {
+  outline: 2px solid #495464;
+  outline-offset: 2px;
+}
