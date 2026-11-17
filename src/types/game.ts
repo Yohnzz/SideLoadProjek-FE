@@ -53,6 +53,8 @@ export interface Game {
   version: string
   badge?: string // misal: 'Versi Baru Tersedia'
   download_url?: string
+  storage_file_path?: string
+  web_build_url?: string
   status?: 'published' | 'pending' | 'revision' | 'rejected' | 'pending_review' | 'revision_needed' | 'draft' | 'taken_down'
 }
 
@@ -73,6 +75,7 @@ export interface UserProfile {
   id: string
   email: string
   username: string
+  fullName?: string
   role: UserRole
   devStatus: DevApprovalStatus
   studioName?: string

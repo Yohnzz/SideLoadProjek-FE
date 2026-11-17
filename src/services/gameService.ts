@@ -238,6 +238,8 @@ export const gameService = {
     fileSize: string
     ratingCategory: string
     sha256Hash?: string
+    storageFilePath?: string
+    webBuildUrl?: string
   }): Promise<{ success: boolean; gameId?: string; error?: string }> {
     if (!isSupabaseConfigured) {
       return { success: true }
@@ -266,6 +268,8 @@ export const gameService = {
           file_size: gameData.fileSize,
           rating_category: gameData.ratingCategory,
           sha256_hash: gameData.sha256Hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+          storage_file_path: gameData.storageFilePath || null,
+          web_build_url: gameData.webBuildUrl || null,
           status: 'pending_review',
         })
         .select()
@@ -335,6 +339,8 @@ export const gameService = {
       } : undefined,
       version: dbItem.version || 'v1.0.0',
       badge: dbItem.badge,
+      storage_file_path: dbItem.storage_file_path,
+      web_build_url: dbItem.web_build_url,
       status: dbItem.status,
     }
   },

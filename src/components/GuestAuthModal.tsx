@@ -1,12 +1,13 @@
-import React from 'react'
-import { X, Lock, ArrowRight } from 'lucide-react'
+import React from 'react';
+import { Lock, ArrowRight, X } from 'lucide-react';
+import { Button } from './ui';
 
 interface GuestAuthModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onOpenLogin: () => void
-  onOpenRegister: () => void
-  actionLabel?: string
+  isOpen: boolean;
+  onClose: () => void;
+  onOpenLogin: () => void;
+  onOpenRegister: () => void;
+  actionLabel?: string;
 }
 
 export const GuestAuthModal: React.FC<GuestAuthModalProps> = ({
@@ -14,61 +15,63 @@ export const GuestAuthModal: React.FC<GuestAuthModalProps> = ({
   onClose,
   onOpenLogin,
   onOpenRegister,
-  actionLabel = 'mengunduh atau membeli karya ini'
+  actionLabel = 'mengunduh atau membeli karya ini',
 }) => {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#222629]/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-[#F4F4F2] rounded-2xl max-w-sm w-full border border-[#BBBFCA] p-6 shadow-2xl relative space-y-4 text-center">
-        
-        <button 
+    <div className="fixed inset-0 bg-[#171923]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-[16px] max-w-sm w-full border border-[#E5E7EB] p-6 shadow-xl relative space-y-4 text-center">
+        <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-[#495464] hover:text-[#222629] p-1"
+          aria-label="Tutup jendela"
+          className="absolute right-4 top-4 text-[#737887] hover:text-[#171923] p-1.5 rounded-full hover:bg-[#F0F1F5] transition"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="w-12 h-12 rounded-2xl bg-[#495464] text-[#F4F4F2] flex items-center justify-center mx-auto shadow-md">
+        <div className="w-12 h-12 rounded-[12px] bg-[#EFF6FF] text-[#2373FB] flex items-center justify-center mx-auto shadow-xs">
           <Lock className="w-6 h-6" />
         </div>
 
-        <div className="space-y-1">
-          <h3 className="text-base font-bold text-[#222629]">
-            Masuk atau Buat Akun
-          </h3>
-          <p className="text-xs text-[#495464] leading-relaxed">
+        <div className="space-y-1.5">
+          <h3 className="text-base font-bold text-[#171923]">Masuk atau Buat Akun</h3>
+          <p className="text-xs text-[#737887] leading-relaxed">
             Untuk {actionLabel}, Anda perlu masuk menggunakan akun SideLoad terlebih dahulu.
           </p>
         </div>
 
-        <div className="space-y-2 pt-2">
-          <button
+        <div className="space-y-2.5 pt-2">
+          <Button
+            variant="primary"
+            size="md"
+            className="w-full justify-center"
             onClick={() => {
-              onClose()
-              onOpenLogin()
+              onClose();
+              onOpenLogin();
             }}
-            className="w-full py-2.5 px-4 bg-[#495464] text-[#F4F4F2] text-xs font-semibold rounded-lg hover:bg-[#3d4654] transition flex items-center justify-center gap-1.5 shadow-xs"
+            rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            <span>Masuk Akun</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+            Masuk Akun
+          </Button>
 
-          <button
+          <Button
+            variant="secondary"
+            size="md"
+            className="w-full justify-center"
             onClick={() => {
-              onClose()
-              onOpenRegister()
+              onClose();
+              onOpenRegister();
             }}
-            className="w-full py-2.5 px-4 bg-[#E8E8E8] text-[#222629] text-xs font-semibold rounded-lg border border-[#BBBFCA] hover:bg-white transition"
           >
             Daftar Akun Baru
-          </button>
+          </Button>
         </div>
 
-        <p className="text-[11px] text-[#495464] pt-1">
-          100% Gratis & Bebas Telemetri.
+        <p className="text-[11px] text-[#737887] pt-1">
+          100% Gratis dan Bebas Telemetri.
         </p>
       </div>
     </div>
-  )
-}
+  );
+};

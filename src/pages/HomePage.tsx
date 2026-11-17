@@ -1,160 +1,255 @@
-import React from 'react'
-import { ShoppingBag, ChevronRight } from 'lucide-react'
-import type { Game } from '../types/game'
+import React from 'react';
+import { ArrowRight, ChevronRight, Play, ShoppingBag, Sparkles, Trophy, Flame } from 'lucide-react';
+import { Button, Badge, Skeleton, Card } from '../components/ui';
+import { GameCard, GameCardSkeleton } from '../components/GameCard';
+import type { Game } from '../types/game';
 
 interface HomePageProps {
-  games: Game[]
-  onSelectGame: (game: Game) => void
-  searchQuery: string
-  onOpenJoinDeveloper?: () => void
+  games: Game[];
+  onSelectGame: (game: Game) => void;
+  searchQuery: string;
+  onOpenJoinDeveloper?: () => void;
+  onNavigateToExplore?: () => void;
+  isLoading?: boolean;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   games,
   onSelectGame,
   searchQuery,
-  onOpenJoinDeveloper
+  onOpenJoinDeveloper,
+  onNavigateToExplore,
+  isLoading = false,
 }) => {
-  // Game kurator utama (Kala: Warisan Kabut)
-  const featuredGame = games.find(g => g.slug === 'kala-warisan-kabut') || games[0]
+  // Pilihan kurator utama (Kala: Warisan Kabut atau game pertama)
+  const featuredGame = games.find((g) => g.slug === 'kala-warisan-kabut') || games[0];
 
-  // Filter game jika ada kata kunci pencarian
-  const filteredGames = games.filter(g => 
-    g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    g.developer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    g.genre.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Filter pencarian jika ada kata kunci di header
+  const searchResults = games.filter(
+    (g) =>
+      g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.developer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.genre.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Kelompokkan data untuk 2 rak
-  const mostPlayed = games.filter(g => 
-    ['kopi-malam-kisah-sudut-kota', 'layar-pinisi-ekspedisi-samudra', 'memori-kaset-pita', 'candi-runtuh-labirin-kuno'].includes(g.slug)
-  )
+  // Rak: Paling Banyak Dimainkan
+  const mostPlayed = games.filter((g) =>
+    ['kopi-malam-kisah-sudut-kota', 'layar-pinisi-ekspedisi-samudra', 'memori-kaset-pita', 'candi-runtuh-labirin-kuno'].includes(
+      g.slug
+    )
+  );
+  const displayMostPlayed = mostPlayed.length > 0 ? mostPlayed : games.slice(1, 5);
 
-  const newReleases = games.filter(g => 
-    ['bayang-lakon-dalang', 'subak-siklus-air-padi', 'kereta-parahyangan-1994', 'bintang-sumba-peta-langit'].includes(g.slug)
-  )
+  // Rak: Rilisan Terbaru
+  const newReleases = games.filter((g) =>
+    ['bayang-lakon-dalang', 'subak-siklus-air-padi', 'kereta-parahyangan-1994', 'bintang-sumba-peta-langit'].includes(
+      g.slug
+    )
+  );
+  const displayNewReleases = newReleases.length > 0 ? newReleases : games.slice(4, 8);
 
+  // Jika sedang mencari di search bar
   if (searchQuery.trim() !== '') {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between pb-2 border-b border-[#BBBFCA]/40">
-          <h1 className="text-xl font-bold text-[#222629]">
-            Hasil Pencarian: "{searchQuery}"
-          </h1>
-          <span className="text-xs text-[#495464]">
-            Ditemukan {filteredGames.length} produk
-          </span>
+        <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
+          <div>
+            <h1 className="text-xl font-bold text-[#171923] tracking-tight">
+              Hasil Pencarian: "{searchQuery}"
+            </h1>
+            <p className="text-xs text-[#737887] mt-0.5">
+              Ditemukan {searchResults.length} produk game & aplikasi indie
+            </p>
+          </div>
         </div>
 
-        {filteredGames.length === 0 ? (
-          <div className="bg-[#E8E8E8] rounded-xl p-12 text-center border border-[#BBBFCA]/40">
-            <p className="text-sm text-[#495464]">
-              Tidak ada game atau aplikasi yang cocok dengan kata kunci "{searchQuery}".
+        {searchResults.length === 0 ? (
+          <div className="bg-white rounded-[16px] border border-[#E5E7EB] p-12 text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-[#F0F1F5] flex items-center justify-center text-[#737887] mx-auto">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-[#171923]">Tidak ada produk yang cocok</h3>
+            <p className="text-xs text-[#737887] max-w-sm mx-auto">
+              Coba cari dengan kata kunci lain, nama developer, atau genre game seperti RPG, Simulasi, atau Petualangan.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredGames.map(game => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {searchResults.map((game) => (
               <GameCard key={game.id} game={game} onSelect={onSelectGame} />
             ))}
           </div>
         )}
       </div>
-    )
+    );
+  }
+
+  // Loading skeleton state
+  if (isLoading || (!featuredGame && games.length === 0)) {
+    return (
+      <div className="space-y-12">
+        {/* Hero skeleton */}
+        <div className="bg-white rounded-[16px] border border-[#E5E7EB] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <Skeleton className="lg:col-span-7 aspect-16/9 rounded-[12px]" />
+          <div className="lg:col-span-5 space-y-4">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-16 w-full" />
+            <div className="pt-4 border-t border-[#E5E7EB] space-y-3">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-10 w-full rounded-[10px]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Grids skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <GameCardSkeleton key={`skeleton-${i}`} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-12">
-      {/* 1. Sorotan Pilihan Kurator Minggu Ini */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#495464]">
-          <span>Pilihan Kurator Minggu Ini</span>
-          <span className="font-pixel text-[10px]">Edisi 01</span>
-        </div>
-
-        {featuredGame && (
-          <div className="bg-[#E8E8E8] rounded-xl border border-[#BBBFCA]/40 p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            {/* Cover Utama */}
-            <div 
-              onClick={() => onSelectGame(featuredGame)}
-              className="lg:col-span-7 aspect-16/9 rounded-lg overflow-hidden border border-[#BBBFCA]/50 relative group cursor-pointer shadow-xs"
-            >
-              <img 
-                src={featuredGame.cover_url} 
-                alt={featuredGame.title} 
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">
-                <span className="text-white/90 font-bold text-xs tracking-wider uppercase bg-black/40 px-2 py-0.5 rounded backdrop-blur-xs">
-                  Beranda SideLoad
-                </span>
-              </div>
+      {/* 1. Hero: Pilihan Kurator Besar */}
+      {featuredGame && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <Badge variant="primary" dot size="sm">
+                Pilihan Kurator Minggu Ini
+              </Badge>
+              <span className="text-[11px] text-[#737887] hidden sm:inline">
+                Karya indie pilihan terbaik nusantara
+              </span>
             </div>
-
-            {/* Info Kurasi */}
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-1.5 py-0.5 rounded bg-[#F4F4F2] text-[#495464] border border-[#BBBFCA]/60 text-[10px] font-pixel font-bold">
-                    WIN
-                  </span>
-                  <span className="text-xs text-[#495464] font-medium">
-                    {featuredGame.developer}
-                  </span>
-                </div>
-
-                <h1 
-                  onClick={() => onSelectGame(featuredGame)}
-                  className="text-2xl sm:text-3xl font-extrabold text-[#222629] tracking-tight hover:text-[#495464] cursor-pointer transition"
-                >
-                  {featuredGame.title}
-                </h1>
-
-                <p className="text-xs sm:text-sm text-[#495464] leading-relaxed line-clamp-4">
-                  {featuredGame.short_description}
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-4 border-t border-[#BBBFCA]/40">
-                <div className="flex items-center justify-between text-xs text-[#495464]">
-                  <span>Harga Resmi</span>
-                  <span className="text-base font-bold text-[#222629]">
-                    {featuredGame.price === 0 ? 'Gratis' : `Rp${featuredGame.price.toLocaleString('id-ID')}`}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => onSelectGame(featuredGame)}
-                  className="w-full py-2.5 px-4 bg-[#495464] text-[#F4F4F2] text-sm font-semibold rounded-lg hover:bg-[#3d4654] active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-xs"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>
-                    {featuredGame.price === 0 ? 'Unduh Gratis' : `Beli Rp${featuredGame.price.toLocaleString('id-ID')}`}
-                  </span>
-                </button>
-              </div>
-            </div>
+            <span className="text-[11px] font-semibold text-[#737887]">
+              Edisi 01
+            </span>
           </div>
-        )}
-      </section>
+
+          <Card
+            hoverable
+            onClick={() => onSelectGame(featuredGame)}
+            className="p-4 sm:p-6 lg:p-7 border border-[#E5E7EB] bg-white shadow-xs group"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+              {/* Cover Besar (16:9) */}
+              <div className="lg:col-span-7 aspect-16/9 rounded-[12px] overflow-hidden bg-[#F0F1F5] relative group-hover:shadow-sm transition-all duration-300">
+                <img
+                  src={featuredGame.cover_url}
+                  alt={featuredGame.title}
+                  className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-102"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4 sm:p-5">
+                  <div className="flex items-center gap-2">
+                    {featuredGame.platforms.includes('WEB') && (
+                      <span className="px-2.5 py-1 rounded-[6px] bg-[#6A3DFB] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
+                        <Play className="w-3 h-3 fill-current" />
+                        <span>Dapat Dimainkan di Browser</span>
+                      </span>
+                    )}
+                    {featuredGame.platforms.includes('WIN') && (
+                      <span className="px-2.5 py-1 rounded-[6px] bg-black/60 text-white text-xs font-medium backdrop-blur-xs">
+                        Windows PC
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Informasi Kurasi & Detail */}
+              <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-[#737887]">
+                      {featuredGame.developer}
+                    </span>
+                    <span className="text-[#D1D5DB]">•</span>
+                    <span className="text-xs text-[#737887]">
+                      {featuredGame.genre}
+                    </span>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-[#171923] tracking-tight group-hover:text-[#2373FB] transition-colors">
+                    {featuredGame.title}
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-[#737887] leading-relaxed line-clamp-4">
+                    {featuredGame.short_description || featuredGame.description}
+                  </p>
+                </div>
+
+                {/* Harga & CTA Utama */}
+                <div className="pt-4 border-t border-[#E5E7EB] space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#737887] font-medium">Harga Akses</span>
+                    <span className="text-lg font-bold text-[#171923]">
+                      {featuredGame.price === 0
+                        ? 'Gratis'
+                        : `Rp ${featuredGame.price.toLocaleString('id-ID')}`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {featuredGame.platforms.includes('WEB') && (
+                      <Button
+                        variant="primary"
+                        size="md"
+                        leftIcon={<Play className="w-4 h-4 fill-current" />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectGame(featuredGame);
+                        }}
+                      >
+                        Mainkan Sekarang
+                      </Button>
+                    )}
+                    <Button
+                      variant={featuredGame.platforms.includes('WEB') ? 'outline' : 'primary'}
+                      size="md"
+                      leftIcon={<ShoppingBag className="w-4 h-4" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectGame(featuredGame);
+                      }}
+                    >
+                      {featuredGame.price === 0 ? 'Unduh Gratis' : 'Beli Game'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* 2. Rak: Paling Banyak Dimainkan */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold tracking-tight text-[#222629]">
-            Paling Banyak Dimainkan
-          </h2>
-          <button 
-            onClick={() => {}}
-            className="text-xs font-semibold text-[#495464] hover:text-[#222629] flex items-center gap-0.5 transition"
-          >
-            <span>Lihat semua</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-[#2373FB]" />
+            <h2 className="text-lg font-bold tracking-tight text-[#171923]">
+              Paling Banyak Dimainkan
+            </h2>
+          </div>
+          {onNavigateToExplore && (
+            <button
+              onClick={onNavigateToExplore}
+              className="text-xs font-semibold text-[#2373FB] hover:text-[#1D5FD0] flex items-center gap-1 transition-colors"
+            >
+              <span>Lihat Semua</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mostPlayed.map(game => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {displayMostPlayed.map((game) => (
             <GameCard key={game.id} game={game} onSelect={onSelectGame} />
           ))}
         </div>
@@ -163,83 +258,57 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* 3. Rak: Rilisan Terbaru Indie */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold tracking-tight text-[#222629]">
-            Rilisan Terbaru Indie
-          </h2>
-          <button 
-            onClick={() => {}}
-            className="text-xs font-semibold text-[#495464] hover:text-[#222629] flex items-center gap-0.5 transition"
-          >
-            <span>Lihat katalog</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-[#6A3DFB]" />
+            <h2 className="text-lg font-bold tracking-tight text-[#171923]">
+              Rilisan Terbaru Indie
+            </h2>
+          </div>
+          {onNavigateToExplore && (
+            <button
+              onClick={onNavigateToExplore}
+              className="text-xs font-semibold text-[#2373FB] hover:text-[#1D5FD0] flex items-center gap-1 transition-colors"
+            >
+              <span>Lihat Katalog</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {newReleases.map(game => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {displayNewReleases.map((game) => (
             <GameCard key={game.id} game={game} onSelect={onSelectGame} />
           ))}
         </div>
       </section>
 
-      {/* 4. Banner Callout Kemitraan Developer */}
-      <section className="bg-[#E8E8E8] rounded-xl p-6 border border-[#BBBFCA]/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h3 className="text-base font-bold text-[#222629]">
-            Kembangkan karya game Anda bersama kami?
+      {/* 4. Banner Ajakan "Jadi Developer" */}
+      <section className="bg-white rounded-[16px] border border-[#E5E7EB] p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xs">
+        <div className="space-y-1.5 max-w-xl">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F3E8FF] text-[#6A3DFB] text-[11px] font-semibold">
+            <Sparkles className="w-3 h-3" />
+            <span>Program Kreator SideLoad</span>
+          </div>
+          <h3 className="text-lg font-bold text-[#171923] tracking-tight">
+            Publikasikan Karya Game & Aplikasi Kamu di SideLoad
           </h3>
-          <p className="text-xs text-[#495464]">
-            Distribusikan langsung ke pemain Indonesia tanpa potongan biaya penerbitan yang memberatkan.
+          <p className="text-xs text-[#737887] leading-relaxed">
+            Dapatkan akses langsung ke ribuan pemain Indonesia. Skema bagi hasil transparan: 98% pendapatan untuk developer, 2% biaya pemeliharaan platform, tanpa biaya tersembunyi.
           </p>
         </div>
-        <button 
-          onClick={onOpenJoinDeveloper}
-          className="px-4 py-2 bg-[#F4F4F2] text-[#495464] text-xs font-semibold rounded-lg border border-[#BBBFCA] hover:bg-white hover:text-[#222629] transition shrink-0"
-        >
-          Pelajari Tata Cara Draf
-        </button>
+
+        {onOpenJoinDeveloper && (
+          <Button
+            variant="primary"
+            size="md"
+            rightIcon={<ArrowRight className="w-4 h-4" />}
+            onClick={onOpenJoinDeveloper}
+            className="shrink-0"
+          >
+            Daftar Jadi Developer
+          </Button>
+        )}
       </section>
     </div>
-  )
-}
-
-// Sub-komponen Kartu Game Sederhana (Cover, Judul, Platform, Harga)
-interface GameCardProps {
-  game: Game
-  onSelect: (game: Game) => void
-}
-
-const GameCard: React.FC<GameCardProps> = ({ game, onSelect }) => {
-  return (
-    <article
-      onClick={() => onSelect(game)}
-      className="bg-[#E8E8E8] rounded-xl p-3 border border-[#BBBFCA]/40 hover:border-[#495464] transition group cursor-pointer flex flex-col justify-between"
-    >
-      <div>
-        {/* Cover 16:9 */}
-        <div className="w-full aspect-16/10 rounded-lg overflow-hidden border border-[#BBBFCA]/30 mb-2.5 relative bg-[#222629]">
-          <img 
-            src={game.cover_url} 
-            alt={game.title} 
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-103"
-          />
-        </div>
-
-        {/* Judul Game */}
-        <h3 className="text-sm font-bold text-[#222629] group-hover:text-[#495464] transition line-clamp-1">
-          {game.title}
-        </h3>
-      </div>
-
-      {/* Baris Platform dan Harga */}
-      <div className="mt-3 pt-2 border-t border-[#BBBFCA]/30 flex items-center justify-between text-xs">
-        <span className="font-pixel text-[10px] text-[#495464] tracking-tight">
-          {game.platforms.join(' • ')}
-        </span>
-        <span className="font-bold text-[#222629]">
-          {game.price === 0 ? 'Gratis' : `Rp${game.price.toLocaleString('id-ID')}`}
-        </span>
-      </div>
-    </article>
-  )
-}
+  );
+};

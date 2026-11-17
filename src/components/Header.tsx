@@ -4,6 +4,7 @@ import type { UserProfile } from '../types/game'
 
 export type NavPage = 
   | 'home' 
+  | 'explore'
   | 'detail' 
   | 'checkout' 
   | 'library' 
@@ -13,6 +14,7 @@ export type NavPage =
   | 'dev-waiting'
   | 'admin'
   | 'auth'
+  | 'design-system'
 
 interface HeaderProps {
   currentPage: NavPage
@@ -43,11 +45,11 @@ export const Header: React.FC<HeaderProps> = ({
           className="focus:outline-none group shrink-0"
           title="Beranda SideLoad"
         >
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-[#222629] border border-[#BBBFCA]/60 flex items-center justify-center shadow-xs transition group-hover:scale-105">
+          <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center transition group-hover:scale-105">
             <img 
-              src="/sideload_logo.jpg" 
+              src="/sideload_new_logo.png" 
               alt="SideLoad Logo" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         </button>
@@ -82,6 +84,17 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             Pustaka
+          </button>
+
+          <button 
+            onClick={() => onNavigate('design-system')}
+            className={`transition px-2.5 py-1 rounded-[6px] text-xs font-semibold ${
+              currentPage === 'design-system' 
+                ? 'bg-[#2373FB] text-white' 
+                : 'bg-[#EFF6FF] text-[#2373FB] hover:bg-[#DBEAFE]'
+            }`}
+          >
+            Design System
           </button>
 
           {/* Navigasi khusus Pengguna / Developer */}

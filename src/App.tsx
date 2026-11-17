@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Header, type NavPage } from './components/Header'
-import { Footer } from './components/Footer'
+import { Navbar, Footer, DashboardLayout } from './components/layout'
+import type { NavPage } from './components/Header'
 import { HomePage } from './pages/HomePage'
+import { ExplorePage } from './pages/ExplorePage'
 import { GameDetailPage } from './pages/GameDetailPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { LibraryPage } from './pages/LibraryPage'
@@ -11,6 +12,7 @@ import { DeveloperDashboardPage } from './pages/DeveloperDashboardPage'
 import { DeveloperWaitingApprovalPage } from './pages/DeveloperWaitingApprovalPage'
 import { AdminCuratorPage } from './pages/AdminCuratorPage'
 import { AuthPage } from './pages/AuthPage'
+import { DesignSystemShowcase } from './pages/DesignSystemShowcase'
 import { GuestAuthModal } from './components/GuestAuthModal'
 import { DUMMY_GAMES } from './data/dummyGames'
 import type { Game, UserProfile, BankAccount } from './types/game'
@@ -37,6 +39,7 @@ export default function App() {
   const [games, setGames] = useState<Game[]>(DUMMY_GAMES)
   const [selectedGame, setSelectedGame] = useState<Game>(DUMMY_GAMES[0])
   const [searchQuery, setSearchQuery] = useState('')
+  const [adminTab, setAdminTab] = useState<'products' | 'devs' | 'payouts'>('products')
   
   // Koleksi game yang dimiliki user
   const [ownedGames, setOwnedGames] = useState<Game[]>([])
@@ -61,6 +64,14 @@ export default function App() {
         const userLibrary = await gameService.getUserLibrary(profile.id)
         if (isMounted && userLibrary.length > 0) {
           setOwnedGames(userLibrary)
+        }
+        // Arahkan otomatis ke dasbor sesuai role saat halaman dimuat ulang
+        if (isMounted) {
+          if (profile.role === 'admin') {
+            setCurrentPage('admin')
+          } else if (profile.role === 'developer') {
+            setCurrentPage('dev-dashboard')
+          }
         }
       }
 
@@ -193,10 +204,12 @@ export default function App() {
           }}
           onAuthSuccess={async (role, username, email) => {
             const profile = await authService.getCurrentUserProfile()
+            let activeRole = role
             if (profile) {
               setCurrentUser(profile)
               const userLibrary = await gameService.getUserLibrary(profile.id)
               setOwnedGames(userLibrary)
+              activeRole = profile.role
             } else {
               setCurrentUser({
                 id: 'usr-' + Date.now(),
@@ -207,7 +220,14 @@ export default function App() {
               })
             }
             showToast(`Selamat datang kembali, ${username}!`)
-            setCurrentPage('home')
+            // Arahkan ke dasbor sesuai role
+            if (activeRole === 'admin') {
+              setCurrentPage('admin')
+            } else if (activeRole === 'developer') {
+              setCurrentPage('dev-dashboard')
+            } else {
+              setCurrentPage('home')
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
           onOpenJoinDeveloper={() => {
@@ -219,13 +239,15 @@ export default function App() {
     )
   }
 
+  const isDashboardView = currentPage === 'dev-dashboard' || currentPage === 'submit-game' || currentPage === 'admin'
+
   return (
-    <div className="min-h-screen bg-[#F4F4F2] text-[#222629] font-sans flex flex-col selection:bg-[#BBBFCA] selection:text-[#222629]">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#171923] font-sans flex flex-col antialiased">
       
       {/* Toast Notifikasi Global */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#222629] text-[#F4F4F2] px-4 py-3 rounded-lg text-xs font-semibold shadow-lg flex items-center gap-2.5 border border-[#BBBFCA]/40 animate-in fade-in duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="fixed top-5 right-5 z-50 bg-white border border-[#BBF7D0] shadow-lg p-3.5 rounded-[12px] flex items-center gap-2.5 text-xs font-semibold text-[#15803D] animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -247,30 +269,126 @@ export default function App() {
         }}
       />
 
-      {/* Header Bersih dengan Logo SAJA di Kiri Atas */}
-      <Header
-        currentPage={currentPage}
-        onNavigate={(page) => {
-          if (page === 'library' && currentUser.role === 'guest') {
-            requireUserAuth('mengakses pustaka game', () => {})
-            return
+      {isDashboardView ? (
+        <DashboardLayout
+          role={currentPage === 'admin' ? 'admin' : 'developer'}
+          currentUser={currentUser}
+          activeNavId={
+            currentPage === 'submit-game'
+              ? 'upload'
+              : currentPage === 'admin'
+              ? adminTab === 'products'
+                ? 'review-produk'
+                : adminTab === 'devs'
+                ? 'pengajuan-dev'
+                : 'pencairan-dana'
+              : 'katalog'
           }
-          setCurrentPage(page)
-          window.scrollTo({ top: 0, behavior: 'smooth' })
-        }}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        currentUser={currentUser}
-        onOpenAuth={(mode = 'login') => {
-          setAuthMode(mode)
-          setCurrentPage('auth')
-          window.scrollTo({ top: 0, behavior: 'smooth' })
-        }}
-        onLogout={handleLogout}
-      />
+          onNavSelect={(navId) => {
+            if (navId === 'upload') {
+              setCurrentPage('submit-game')
+            } else if (navId === 'katalog' || navId === 'transaksi' || navId === 'rekening') {
+              setCurrentPage('dev-dashboard')
+            } else if (navId === 'review-produk') {
+              setAdminTab('products')
+              setCurrentPage('admin')
+            } else if (navId === 'pengajuan-dev') {
+              setAdminTab('devs')
+              setCurrentPage('admin')
+            } else if (navId === 'pencairan-dana') {
+              setAdminTab('payouts')
+              setCurrentPage('admin')
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onBackToStore={() => {
+            setCurrentPage('home')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onLogout={handleLogout}
+        >
+          {/* Formulir Pengajuan Game & Aplikasi */}
+          {currentPage === 'submit-game' && (
+            <SubmitGamePage
+              currentUser={currentUser}
+              onBack={() => {
+                setCurrentPage('dev-dashboard')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              onSubmitSuccess={() => {
+                showToast('Karya berhasil diajukan untuk review! Status berubah menjadi Menunggu Review.')
+                setCurrentPage('dev-dashboard')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            />
+          )}
 
-      {/* Konten Halaman Utama */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+          {/* Dasbor Developer Lengkap */}
+          {currentPage === 'dev-dashboard' && (
+            <DeveloperDashboardPage
+              currentUser={currentUser}
+              onUploadNew={() => {
+                setCurrentPage('submit-game')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              onOpenStorePage={(slug) => {
+                const found = games.find(g => g.slug === slug)
+                handleSelectGame(found || games[0])
+              }}
+              bankAccount={currentUser.bankAccount}
+              onSaveBankAccount={handleSaveBankAccount}
+            />
+          )}
+
+          {/* Panel Kurasi & Admin Lengkap */}
+          {currentPage === 'admin' && (
+            <AdminCuratorPage
+              activeTab={adminTab}
+              onTabChange={setAdminTab}
+              onBackToStore={() => {
+                setCurrentPage('home')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              onApproveDeveloperAccount={(approvedStudio) => {
+                if (currentUser.studioName === approvedStudio) {
+                  setCurrentUser(prev => ({
+                    ...prev,
+                    role: 'developer',
+                    devStatus: 'approved',
+                  }))
+                }
+                showToast(`Akun studio ${approvedStudio} disetujui menjadi developer resmi.`)
+              }}
+            />
+          )}
+        </DashboardLayout>
+      ) : (
+        <>
+          {/* Header & Navbar Global Lengket & Ringkas */}
+          <Navbar
+            currentPage={currentPage}
+            onNavigate={(page) => {
+              if (page === 'library' && currentUser.role === 'guest') {
+                requireUserAuth('mengakses pustaka game', () => {})
+                return
+              }
+              setCurrentPage(page)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            currentUser={currentUser}
+            ownedCount={ownedGames.length}
+            onOpenAuth={(mode = 'login') => {
+              setAuthMode(mode)
+              setCurrentPage('auth')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            onLogout={handleLogout}
+          />
+
+          {/* Konten Halaman Utama Publik */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
         
         {/* 1. Beranda / Landing Page */}
         {currentPage === 'home' && (
@@ -278,6 +396,10 @@ export default function App() {
             games={games}
             onSelectGame={handleSelectGame}
             searchQuery={searchQuery}
+            onNavigateToExplore={() => {
+              setCurrentPage('explore')
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
             onOpenJoinDeveloper={() => {
               if (currentUser.devStatus === 'pending') {
                 setCurrentPage('dev-waiting')
@@ -291,19 +413,29 @@ export default function App() {
           />
         )}
 
-        {/* 2. Detail Produk */}
+        {/* 2. Halaman Jelajah & Filter Lengkap */}
+        {currentPage === 'explore' && (
+          <ExplorePage
+            games={games}
+            onSelectGame={handleSelectGame}
+            initialQuery={searchQuery}
+          />
+        )}
+
+        {/* 3. Detail Produk */}
         {currentPage === 'detail' && (
           <GameDetailPage
             game={selectedGame}
+            isOwned={ownedGames.some(g => g.id === selectedGame.id)}
             onBack={() => {
-              setCurrentPage('home')
+              setCurrentPage('explore')
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
             onCheckout={handleProceedToCheckout}
           />
         )}
 
-        {/* 3. Checkout */}
+        {/* 4. Checkout */}
         {currentPage === 'checkout' && (
           <CheckoutPage
             game={selectedGame}
@@ -315,13 +447,13 @@ export default function App() {
           />
         )}
 
-        {/* 4. Pustaka Saya */}
+        {/* 5. Pustaka Saya */}
         {currentPage === 'library' && (
           <LibraryPage
             ownedGames={ownedGames}
             onSelectGame={handleSelectGame}
-            onExplore={() => {
-              setCurrentPage('home')
+            onExploreMore={() => {
+              setCurrentPage('explore')
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
           />
@@ -359,61 +491,13 @@ export default function App() {
           />
         )}
 
-        {/* 7. Formulir Pengajuan Game & Aplikasi */}
-        {currentPage === 'submit-game' && (
-          <SubmitGamePage
-            currentUser={currentUser}
-            onBack={() => {
-              setCurrentPage('dev-dashboard')
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-            onSubmitSuccess={() => {
-              showToast('Karya berhasil diajukan untuk review! Status berubah menjadi Menunggu Review.')
-              setCurrentPage('dev-dashboard')
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-          />
-        )}
-
-        {/* 8. Dasbor Developer Lengkap */}
-        {currentPage === 'dev-dashboard' && (
-          <DeveloperDashboardPage
-            currentUser={currentUser}
-            onUploadNew={() => {
-              setCurrentPage('submit-game')
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-            onOpenStorePage={(slug) => {
-              const found = games.find(g => g.slug === slug)
-              handleSelectGame(found || games[0])
-            }}
-            bankAccount={currentUser.bankAccount}
-            onSaveBankAccount={handleSaveBankAccount}
-          />
-        )}
-
-        {/* 9. Panel Kurasi & Admin Lengkap */}
-        {currentPage === 'admin' && (
-          <AdminCuratorPage
-            onBackToStore={() => {
-              setCurrentPage('home')
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-            onApproveDeveloperAccount={(approvedStudio) => {
-              if (currentUser.studioName === approvedStudio) {
-                setCurrentUser(prev => ({
-                  ...prev,
-                  role: 'developer',
-                  devStatus: 'approved',
-                }))
-              }
-              showToast(`Akun studio ${approvedStudio} disetujui menjadi developer resmi.`)
-            }}
-          />
+        {/* 7. Showcase Desain Sistem (Fase 1) */}
+        {currentPage === 'design-system' && (
+          <DesignSystemShowcase />
         )}
       </main>
 
-      {/* Footer */}
+      {/* Footer Minimalis */}
       <Footer 
         onJoinDeveloper={() => {
           if (currentUser.devStatus === 'pending') {
@@ -426,6 +510,8 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }}
       />
-    </div>
+    </>
+  )}
+</div>
   )
 }

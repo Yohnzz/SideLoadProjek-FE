@@ -1,217 +1,299 @@
-import React, { useState } from 'react'
-import { ArrowLeft, ShieldCheck, Lock } from 'lucide-react'
-import type { Game } from '../types/game'
+import React, { useState } from 'react';
+import { ArrowLeft, ShieldCheck, Lock, QrCode, CheckCircle2, Building, Smartphone } from 'lucide-react';
+import { Button, Badge, Modal } from '../components/ui';
+import type { Game } from '../types/game';
 
 interface CheckoutPageProps {
-  game: Game
-  onBack: () => void
-  onSuccess: (game: Game) => void
+  game: Game;
+  onBack: () => void;
+  onSuccess: (game: Game) => void;
 }
 
-export const CheckoutPage: React.FC<CheckoutPageProps> = ({
-  game,
-  onBack,
-  onSuccess
-}) => {
-  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'va' | 'ewallet'>('qris')
-  const [isProcessing, setIsProcessing] = useState(false)
+export const CheckoutPage: React.FC<CheckoutPageProps> = ({ game, onBack, onSuccess }) => {
+  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'va' | 'ewallet'>('qris');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showQrisModal, setShowQrisModal] = useState(false);
 
-  const handlePay = () => {
-    setIsProcessing(true)
+  const isFree = game.price === 0;
+
+  const handlePayClick = () => {
+    if (isFree) {
+      setIsProcessing(true);
+      setTimeout(() => {
+        setIsProcessing(false);
+        onSuccess(game);
+      }, 1000);
+      return;
+    }
+
+    if (paymentMethod === 'qris') {
+      setShowQrisModal(true);
+    } else {
+      setIsProcessing(true);
+      setTimeout(() => {
+        setIsProcessing(false);
+        onSuccess(game);
+      }, 1500);
+    }
+  };
+
+  const handleSimulateScanQris = () => {
+    setIsProcessing(true);
     setTimeout(() => {
-      setIsProcessing(false)
-      onSuccess(game)
-    }, 1200)
-  }
+      setIsProcessing(false);
+      setShowQrisModal(false);
+      onSuccess(game);
+    }, 1200);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Tombol Kembali & Breadcrumb */}
+    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+      {/* Navigasi Kembali */}
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-xs text-[#495464] hover:text-[#222629] transition"
+        className="inline-flex items-center gap-2 text-xs font-medium text-[#737887] hover:text-[#171923] transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Kembali ke Game / Pembayaran Aman</span>
+        <span>Kembali ke Detail Produk</span>
       </button>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#222629]">
-          Ringkasan Checkout
+        <h1 className="text-2xl font-bold tracking-tight text-[#171923]">
+          {isFree ? 'Konfirmasi Klaim Gratis' : 'Penyelesaian Pembayaran'}
         </h1>
-        <p className="text-xs sm:text-sm text-[#495464]">
-          Selesaikan transaksi dengan pembayaran lokal yang instan tanpa biaya tersembunyi.
+        <p className="text-xs text-[#737887] mt-1">
+          {isFree
+            ? 'Klaim lisensi game ini tanpa biaya dan tambahkan langsung ke pustaka akun Anda.'
+            : 'Transaksi aman dengan gateway pembayaran lokal Indonesia tanpa biaya tersembunyi.'}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        
-        {/* Kolom Kiri: Pilihan Metode Pembayaran Midtrans */}
-        <div className="md:col-span-7 bg-[#E8E8E8] rounded-xl p-6 border border-[#BBBFCA]/40 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        {/* Kolom Kiri: Metode Pembayaran (7 Kolom) */}
+        <div className="md:col-span-7 bg-white rounded-[16px] p-6 border border-[#E5E7EB] shadow-xs space-y-5">
           <div>
-            <h2 className="text-sm font-bold text-[#222629]">Metode Pembayaran</h2>
-            <p className="text-xs text-[#495464]">Pilih jalur transaksi resmi yang Anda gunakan.</p>
+            <h2 className="text-sm font-bold text-[#171923]">Pilihan Metode Transaksi</h2>
+            <p className="text-xs text-[#737887] mt-0.5">
+              {isFree ? 'Klaim instan bebas biaya' : 'Pilih jalur pembayaran resmi yang Anda gunakan'}
+            </p>
           </div>
 
-          <div className="space-y-3 pt-2">
-            
-            {/* QRIS Instan */}
-            <label 
-              onClick={() => setPaymentMethod('qris')}
-              className={`block p-4 rounded-lg border cursor-pointer transition ${
-                paymentMethod === 'qris'
-                  ? 'bg-white border-[#495464] shadow-xs'
-                  : 'bg-[#F4F4F2]/70 border-[#BBBFCA]/50 hover:bg-white'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
+          {isFree ? (
+            <div className="p-4 bg-[#DCFCE7] rounded-[12px] border border-[#BBF7D0] flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-[#16A34A] shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-[#15803D]">Game Gratis / Akses Terbuka</h4>
+                <p className="text-xs text-[#15803D] mt-0.5 leading-relaxed">
+                  Kreator merilis game ini secara gratis. Anda dapat langsung mengklaim dan mengunduhnya ke Pustaka tanpa perlu memasukkan informasi perbankan.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* QRIS Instan */}
+              <label
+                onClick={() => setPaymentMethod('qris')}
+                className={`block p-4 rounded-[12px] border cursor-pointer transition-all ${
+                  paymentMethod === 'qris'
+                    ? 'bg-[#EFF6FF] border-[#2373FB] ring-2 ring-[#2373FB]/20 shadow-xs'
+                    : 'bg-white border-[#E5E7EB] hover:border-[#D1D5DB]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === 'qris'}
+                      onChange={() => setPaymentMethod('qris')}
+                      className="accent-[#2373FB]"
+                    />
+                    <div className="flex items-center gap-2">
+                      <QrCode className="w-4 h-4 text-[#2373FB]" />
+                      <span className="text-xs font-bold text-[#171923]">QRIS Instan</span>
+                    </div>
+                  </div>
+                  <Badge variant="success" size="sm">
+                    Verifikasi Instan
+                  </Badge>
+                </div>
+                <p className="text-xs text-[#737887] mt-2 pl-7 leading-relaxed">
+                  GoPay, OVO, ShopeePay, DANA, BCA Mobile, Livin Mandiri, dan perbankan digital.
+                </p>
+              </label>
+
+              {/* Virtual Account Bank Transfer */}
+              <label
+                onClick={() => setPaymentMethod('va')}
+                className={`block p-4 rounded-[12px] border cursor-pointer transition-all ${
+                  paymentMethod === 'va'
+                    ? 'bg-[#EFF6FF] border-[#2373FB] ring-2 ring-[#2373FB]/20 shadow-xs'
+                    : 'bg-white border-[#E5E7EB] hover:border-[#D1D5DB]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
                   <input
                     type="radio"
                     name="payment"
-                    checked={paymentMethod === 'qris'}
-                    onChange={() => setPaymentMethod('qris')}
-                    className="accent-[#495464]"
+                    checked={paymentMethod === 'va'}
+                    onChange={() => setPaymentMethod('va')}
+                    className="accent-[#2373FB]"
                   />
-                  <span className="font-bold text-sm text-[#222629]">QRIS Instan</span>
+                  <div className="flex items-center gap-2">
+                    <Building className="w-4 h-4 text-[#737887]" />
+                    <span className="text-xs font-bold text-[#171923]">Virtual Account (Transfer Bank)</span>
+                  </div>
                 </div>
-                <span className="text-[10px] font-pixel bg-[#E8E8E8] text-[#495464] px-1.5 py-0.5 rounded border border-[#BBBFCA]/40">
-                  Otomatis Terverifikasi
-                </span>
-              </div>
-              <p className="text-xs text-[#495464] mt-2 pl-6">
-                GoPay, OVO, ShopeePay, DANA, BCA Mobile, Livin, dan aplikasi perbankan berlisensi QRIS.
-              </p>
-            </label>
+                <p className="text-xs text-[#737887] mt-2 pl-7 leading-relaxed">
+                  BCA, Mandiri, BNI, BRI. Nomor rekening virtual dibuat otomatis.
+                </p>
+              </label>
 
-            {/* Virtual Account Bank Transfer */}
-            <label 
-              onClick={() => setPaymentMethod('va')}
-              className={`block p-4 rounded-lg border cursor-pointer transition ${
-                paymentMethod === 'va'
-                  ? 'bg-white border-[#495464] shadow-xs'
-                  : 'bg-[#F4F4F2]/70 border-[#BBBFCA]/50 hover:bg-white'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'va'}
-                  onChange={() => setPaymentMethod('va')}
-                  className="accent-[#495464]"
-                />
-                <span className="font-bold text-sm text-[#222629]">Virtual Account (Bank Transfer)</span>
-              </div>
-              <p className="text-xs text-[#495464] mt-1.5 pl-6">
-                BCA, Mandiri, BRI, BNI. Bayar via ATM, Internet Banking, atau Mobile Banking.
-              </p>
-            </label>
+              {/* E-Wallet Direct */}
+              <label
+                onClick={() => setPaymentMethod('ewallet')}
+                className={`block p-4 rounded-[12px] border cursor-pointer transition-all ${
+                  paymentMethod === 'ewallet'
+                    ? 'bg-[#EFF6FF] border-[#2373FB] ring-2 ring-[#2373FB]/20 shadow-xs'
+                    : 'bg-white border-[#E5E7EB] hover:border-[#D1D5DB]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={paymentMethod === 'ewallet'}
+                    onChange={() => setPaymentMethod('ewallet')}
+                    className="accent-[#2373FB]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-[#737887]" />
+                    <span className="text-xs font-bold text-[#171923]">E-Wallet Langsung (DANA / ShopeePay)</span>
+                  </div>
+                </div>
+                <p className="text-xs text-[#737887] mt-2 pl-7 leading-relaxed">
+                  Otentikasi aman via aplikasi dompet digital ponsel Anda.
+                </p>
+              </label>
+            </div>
+          )}
 
-            {/* E-Wallet Direct Debit */}
-            <label 
-              onClick={() => setPaymentMethod('ewallet')}
-              className={`block p-4 rounded-lg border cursor-pointer transition ${
-                paymentMethod === 'ewallet'
-                  ? 'bg-white border-[#495464] shadow-xs'
-                  : 'bg-[#F4F4F2]/70 border-[#BBBFCA]/50 hover:bg-white'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'ewallet'}
-                  onChange={() => setPaymentMethod('ewallet')}
-                  className="accent-[#495464]"
-                />
-                <span className="font-bold text-sm text-[#222629]">E-Wallet Direct Debit</span>
-              </div>
-              <p className="text-xs text-[#495464] mt-1.5 pl-6">
-                Redirect langsung ke otentikasi akun DANA atau ShopeePay Anda.
-              </p>
-            </label>
-          </div>
-
-          <div className="pt-3 border-t border-[#BBBFCA]/40 flex items-start gap-2 text-[11px] text-[#495464]">
-            <ShieldCheck className="w-4 h-4 text-[#495464] mt-0.5 shrink-0" />
-            <span>
-              Transaksi diproses aman melalui gateway tersertifikasi Bank Indonesia. Garansi perlindungan pengguna berlaku 14 hari penuh.
+          <div className="pt-4 border-t border-[#E5E7EB] flex items-start gap-2.5 text-xs text-[#737887]">
+            <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0 mt-0.5" />
+            <span className="leading-relaxed">
+              Diproses aman melalui sertifikasi enkripsi 256-bit. Dilengkapi jaminan refund 14 hari bila game mengalami kendala teknis.
             </span>
           </div>
         </div>
 
-        {/* Kolom Kanan: Rincian Pembelian */}
-        <div className="md:col-span-5 bg-[#E8E8E8] rounded-xl p-6 border border-[#BBBFCA]/40 space-y-4">
-          <h2 className="text-sm font-bold text-[#222629]">Rincian Pembelian</h2>
+        {/* Kolom Kanan: Rincian Produk & Total Tagihan (5 Kolom) */}
+        <div className="md:col-span-5 bg-white rounded-[16px] p-6 border border-[#E5E7EB] shadow-xs space-y-5">
+          <h2 className="text-sm font-bold text-[#171923]">Rincian Pesanan</h2>
 
-          {/* Mini Box Item */}
-          <div className="flex items-center gap-3 p-3 bg-[#F4F4F2] rounded-lg border border-[#BBBFCA]/40">
-            <div className="w-14 h-12 rounded overflow-hidden bg-[#222629] shrink-0">
-              <img src={game.cover_url} alt="" className="w-full h-full object-cover" />
+          {/* Kartu Ringkasan Produk */}
+          <div className="flex items-center gap-3 p-3 bg-[#F0F1F5] rounded-[12px]">
+            <div className="w-14 h-14 rounded-[8px] overflow-hidden bg-black shrink-0 border border-[#E5E7EB]">
+              <img src={game.cover_url} alt={game.title} className="w-full h-full object-cover" />
             </div>
-            <div className="min-w-0">
-              <h4 className="text-xs font-bold text-[#222629] truncate">{game.title}</h4>
-              <p className="text-[11px] text-[#495464] truncate">{game.developer}</p>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-[9px] font-pixel px-1 py-0.2 bg-[#E8E8E8] text-[#495464] rounded border border-[#BBBFCA]/50">
-                  {game.platforms[0] || 'WIN'}
-                </span>
-                <span className="text-[9px] font-pixel px-1 py-0.2 bg-[#E8E8E8] text-[#495464] rounded border border-[#BBBFCA]/50">
-                  DRM-FREE
-                </span>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-xs font-bold text-[#171923] truncate">{game.title}</h4>
+              <p className="text-[11px] text-[#737887] truncate">{game.developer}</p>
+              <div className="flex items-center gap-1 mt-1">
+                <Badge variant="neutral" size="sm">{game.platforms[0] || 'WIN'}</Badge>
+                <Badge variant="outline" size="sm">DRM-Free</Badge>
               </div>
             </div>
           </div>
 
-          {/* Rincian Harga */}
-          <div className="space-y-2 text-xs text-[#495464] pt-2">
+          {/* Rincian Finansial */}
+          <div className="space-y-2.5 text-xs text-[#737887] pt-2">
             <div className="flex justify-between">
               <span>Harga Lisensi Game</span>
-              <span className="font-semibold text-[#222629]">
-                {game.price === 0 ? 'Gratis' : `Rp${game.price.toLocaleString('id-ID')}`}
+              <span className="font-semibold text-[#171923]">
+                {isFree ? 'Gratis' : `Rp ${game.price.toLocaleString('id-ID')}`}
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Biaya Layanan SideLoad</span>
-              <span className="font-semibold text-[#222629]">Rp0</span>
+              <span>Biaya Pemeliharaan Platform</span>
+              <span className="font-semibold text-[#16A34A]">Rp 0 (Ditanggung Developer)</span>
             </div>
             <div className="flex justify-between">
-              <span>Pajak (Termasuk)</span>
-              <span className="font-semibold text-[#222629]">Rp0</span>
+              <span>Pajak Transaksi</span>
+              <span className="font-semibold text-[#171923]">Termasuk</span>
             </div>
 
-            <div className="pt-3 border-t border-[#BBBFCA]/40 flex justify-between items-center text-sm font-extrabold text-[#222629]">
-              <span>Total Pembayaran</span>
-              <span>
-                {game.price === 0 ? 'Gratis' : `Rp${game.price.toLocaleString('id-ID')}`}
+            <div className="pt-3 border-t border-[#E5E7EB] flex justify-between items-center text-sm font-bold text-[#171923]">
+              <span>Total Akhir</span>
+              <span className="text-lg text-[#2373FB]">
+                {isFree ? 'Gratis' : `Rp ${game.price.toLocaleString('id-ID')}`}
               </span>
             </div>
           </div>
 
-          {/* Tombol Bayar */}
-          <button
-            onClick={handlePay}
-            disabled={isProcessing}
-            className="w-full py-3 px-4 bg-[#495464] text-[#F4F4F2] text-sm font-semibold rounded-lg hover:bg-[#3d4654] active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-xs disabled:opacity-75"
+          {/* Tombol Eksekusi Bayar / Klaim */}
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full shadow-xs"
+            isLoading={isProcessing}
+            leftIcon={isFree ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+            onClick={handlePayClick}
           >
-            {isProcessing ? (
-              <span>Memproses Pembayaran...</span>
-            ) : (
-              <>
-                <Lock className="w-4 h-4" />
-                <span>
-                  {game.price === 0 ? 'Klaim Gratis' : `Bayar Rp${game.price.toLocaleString('id-ID')}`}
-                </span>
-              </>
-            )}
-          </button>
+            {isFree ? 'Klaim Game ke Pustaka' : `Bayar Rp ${game.price.toLocaleString('id-ID')}`}
+          </Button>
 
-          <p className="text-[11px] text-[#495464] text-center pt-1">
-            Garansi refund 14 hari sesuai Kebijakan Refund SideLoad. Tidak ada biaya langganan berulang.
+          <p className="text-[11px] text-[#737887] text-center leading-relaxed">
+            Akses game bersifat permanen untuk akun Anda tanpa biaya langganan bulanan.
           </p>
         </div>
       </div>
+
+      {/* Modal Simulasi QRIS Interaktif */}
+      <Modal
+        isOpen={showQrisModal}
+        onClose={() => setShowQrisModal(false)}
+        title="Pembayaran QRIS Nasional"
+        description="Pindai kode QR menggunakan aplikasi dompet digital atau mobile banking Anda."
+        footer={
+          <div className="w-full flex items-center justify-between">
+            <span className="text-xs text-[#737887]">Menunggu scan kamera...</span>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowQrisModal(false)}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<CheckCircle2 className="w-4 h-4" />}
+                onClick={handleSimulateScanQris}
+              >
+                Simulasi Scan Berhasil
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="flex flex-col items-center justify-center p-4 space-y-4 text-center">
+          <div className="p-4 bg-white rounded-[16px] border-2 border-dashed border-[#2373FB] shadow-md inline-block">
+            {/* Visualisasi QRIS Code Dummy */}
+            <div className="w-48 h-48 bg-[#F0F1F5] rounded-[10px] flex flex-col items-center justify-center p-3 relative">
+              <QrCode className="w-32 h-32 text-[#171923]" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-[#2373FB] text-white flex items-center justify-center font-bold text-xs shadow-md">
+                  SL
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-semibold text-[#171923]">NMK: ID102938475829103</div>
+            <div className="text-sm font-bold text-[#2373FB] mt-0.5">
+              Rp {game.price.toLocaleString('id-ID')}
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
-  )
-}
+  );
+};
